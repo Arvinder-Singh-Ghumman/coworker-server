@@ -9,6 +9,8 @@ import {
   updateListing,
   myListings
 } from "../controllers/listings.js";
+import handleFormData from "../middleware/multer.js";
+import uploadFileToStorage from "../firebase/uploadFile.js";
 
 const router = express.Router();
 
@@ -18,7 +20,7 @@ router.get("/:key", searchByTitle);
 router.get("/mylistings/:id", myListings);
 
 
-router.post("/new", addListing);
+router.post("/new", handleFormData, uploadFileToStorage, addListing);
 router.post("/update/:id", updateListing);
 
 router.delete("/:id", deleteListing);

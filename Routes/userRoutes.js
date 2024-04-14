@@ -1,12 +1,14 @@
 import express from "express";
 import { addUser, deleteUser, getUser, getUserById, logIn, updateUser } from "../controllers/user.js";
+import handleFormData from "../middleware/multer.js";
+import uploadFileToStorage from "../firebase/uploadFile.js";
 
 const router = express.Router();
 
 router.get("/",getUser);
 router.get("/:id",getUserById);
 
-router.post("/signup", addUser);
+router.post("/signup", handleFormData, uploadFileToStorage, addUser);
 router.post("/login", logIn);
 router.post("/update", updateUser)
 

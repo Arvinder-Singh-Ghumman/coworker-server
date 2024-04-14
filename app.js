@@ -4,6 +4,8 @@ import 'dotenv/config';
 import userRoutes from './Routes/userRoutes.js'
 import listingRoutes from './Routes/listingRoutes.js'
 import mongoDbConnection from './mongoDB/connect.js'
+import handleFormData from './middleware/multer.js';
+import uploadFileToStorage from './firebase/uploadFile.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -21,6 +23,7 @@ app.use(express.json())
 
 app.get("/",(req, res) => res.send("Welcome to our API"));
 
+app.post("/",handleFormData,uploadFileToStorage)
 app.use("/user", userRoutes)
 app.use("/listing", listingRoutes)
 

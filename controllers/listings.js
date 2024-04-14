@@ -12,11 +12,9 @@ async function getListing(req, res) {
       listing = await Listing.findById(listingId);
     } else if (listingPage) {
       listing = await Listing.find()
-        .skip(listingPage * 10)
-        .limit(10);
     } else {
       listing = await Listing.aggregate([
-        { $sample: { size: 10 } }, // Fetch a random sample of 10 listings
+        { $sample: { size: 9 } }, // Fetch a random sample of 10 listings
         {
           $lookup: {
             // Populate the owner field
