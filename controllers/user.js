@@ -19,7 +19,7 @@ async function getUser(req, res) {
     return res.status(200).json(user);
   } catch (error) {
     // If an error occurs during token verification or database operation, respond with internal server error
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json(error);
   }
 }
 async function getUserById(req, res) {
@@ -166,13 +166,13 @@ async function deleteUser(req, res) {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.KEY);
     let user = await User.findById(decoded.id);
-    console.log(user)
+    
     if (!user) {
       // If user is not found, respond with 404 Not Found status
       return res.status(404).json({ message: "User not found" });
     }
     // Find the user by ID and delete it
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const deletedUser = await User.findByIdAndDelete(decoded.id);
 
     // Respond with a success message
     res.status(200).json({ message: "User deleted successfully" });
