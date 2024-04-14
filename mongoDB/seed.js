@@ -9,14 +9,14 @@ async function seedDatabase() {
     // Define seed user data
     // const users = [];
     const userObjectIds = Array.from({ length: 100 }, () => new mongoose.Types.ObjectId());
-    const users = userObjectIds.map((id, index) => ({
+    const users = userObjectIds.map((id) => ({
       _id: id,
       name: faker.name.findName(),
       email: faker.internet.email(),
       phone: faker.phone.phoneNumber(),
       password:  faker.internet.password()
     }));    
-
+    console.log(users[1].email+" : "+ users[1].password+" : "+users[1]._id)
     // Insert seed user data into the User collection
     await User.insertMany(users);
 

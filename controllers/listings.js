@@ -177,6 +177,40 @@ async function searchByTitle(req, res) {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+async function myListings(req, res) {
+  try {
+    // getting listing
+    const id = req.params.id;
+    console.log(id)
+    var listing;
+    if (id) {
+      listing = await Listing.aggregate([
+        { $match: { owner: id  } },
+        {
+          $lookup: {
+            // Populate the owner field
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            pipeline: [{ $project: { _id: 1, name: 1, email: 1 } }],
+            as: "owner",
+          },
+        },
+        { $unwind: "$owner" }, // Flatten the owner array
+      ]);
+    }
+
+    if (!listing||listing==[]) {
+      return res.status(404).json({ message: "No results found" });
+    }
+
+    // sending listing
+    return res.status(200).json(listing);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
 async function searchListing(req, res) {
   try {
     var listings;
@@ -283,4 +317,5 @@ export {
   deleteListing,
   searchByTitle,
   searchListing,
+  myListings
 };

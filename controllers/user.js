@@ -1,25 +1,42 @@
 import User from "../models/user.js";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 async function getUser(req, res) {
   try {
     // getting user using token
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.KEY);
     // Find the user by ID and exclude the password field
     const user = await User.findById(decoded.id, { password: 0 });
 
     if (!user) {
       // user not found
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // sending user object (excluding password)
     return res.status(200).json(user);
   } catch (error) {
     // If an error occurs during token verification or database operation, respond with internal server error
-    return res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+async function getUserById(req, res) {
+  const id = req.params.id;
+  try {
+    const user = await User.findById(id, { password: 0 });
+
+    if (!user) {
+      // user not found
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // sending user object (excluding password)
+    return res.status(200).json(user);
+  } catch (error) {
+    // If an error occurs during token verification or database operation, respond with internal server error
+    return res.status(500).json({ message: error });
   }
 }
 
@@ -29,7 +46,7 @@ async function addUser(req, res) {
     const saltRounds = 10;
 
     //checking that email does not exist
-    var user = await User.findOne({ "email":data.email });
+    var user = await User.findOne({ email: data.email });
     if (user) {
       return res.status(400).json({ message: "Email already exists" });
     }
@@ -42,7 +59,7 @@ async function addUser(req, res) {
     try {
       const newUser = await User.create(data);
       const token = jwt.sign(
-        { role: newUser.role, id: newUser._id },  
+        { role: newUser.role, id: newUser._id },
         process.env.KEY,
         { expiresIn: "7d" }
       );
@@ -62,7 +79,7 @@ async function logIn(req, res) {
     //getting user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.sta(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     //checking password
@@ -89,17 +106,16 @@ async function logIn(req, res) {
   }
 }
 
-
 async function updateUser(req, res) {
   try {
     //getting user using id
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.KEY);
-    let user = await User.findById(decoded.userId);
-
+    const user = await User.findById(decoded.id)
+    
     // no user found
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Update user details
@@ -130,27 +146,33 @@ async function updateUser(req, res) {
 
     if (!updateUser) {
       // user not found
-      return res.status(500).json({ message: 'update was success but error occured at a later stage' });
+      return res
+        .status(500)
+        .json({
+          message: "update was success but error occured at a later stage",
+        });
     }
 
     //sending user object (excluding password)
-    return res.status(200).json(user);
+    return res.status(200).json(updatedUser);
   } catch (error) {
-    return res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
 async function deleteUser(req, res) {
-  const userId = req.params.id;
-
   try {
-    // Find the user by ID and delete it
-    const deletedUser = await User.findByIdAndDelete(userId);
-
-    if (!deletedUser) {
+    //getting user using id
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.KEY);
+    let user = await User.findById(decoded.id);
+    console.log(user)
+    if (!user) {
       // If user is not found, respond with 404 Not Found status
       return res.status(404).json({ message: "User not found" });
     }
+    // Find the user by ID and delete it
+    const deletedUser = await User.findByIdAndDelete(userId);
 
     // Respond with a success message
     res.status(200).json({ message: "User deleted successfully" });
@@ -160,4 +182,4 @@ async function deleteUser(req, res) {
   }
 }
 
-export { addUser, logIn, getUser, deleteUser, updateUser };
+export { addUser, logIn, getUser, getUserById, deleteUser, updateUser };
