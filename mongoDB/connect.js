@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-// import seedDatabase from "./seed.js";
+import seedDatabase from "./seed.js";
 const MongoDB_URI = process.env.MongoDB_URI;
 
 connectToMongoDB();
@@ -19,7 +19,7 @@ async function connectToMongoDB() {
       await mongoose.connect(MongoDB_URI);
       console.log("Connection to MongoDB Successfull");
     }
-    // seedDatabase();
+    seedDatabase();
   } catch (err) {
     console.error("Connection to MongoDB Failed:", err);
   }

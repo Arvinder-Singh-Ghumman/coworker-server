@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 import userRoutes from './Routes/userRoutes.js'
 import listingRoutes from './Routes/listingRoutes.js'
+import cors from 'cors'
 import mongoDbConnection from './mongoDB/connect.js'
 import handleFormData from './middleware/multer.js';
 import uploadFileToStorage from './firebase/uploadFile.js';
@@ -17,13 +18,15 @@ app.use((req, res, next) => {
   next();
 })
 
+app.use(cors())
+
 // convert json/form data to javascript object and put into request body                 
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 
 app.get("/",(req, res) => res.send("Welcome to our API"));
 
-app.post("/",handleFormData,uploadFileToStorage)
+// app.post("/",handleFormData,uploadFileToStorage)
 app.use("/user", userRoutes)
 app.use("/listing", listingRoutes)
 

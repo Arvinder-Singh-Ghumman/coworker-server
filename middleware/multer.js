@@ -3,7 +3,6 @@ import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() });
 
 function handleFormData(req, res, next) {
-  console.log(req.body)
   if (req.is("multipart/form-data")) {
     if (Array.isArray(req.files)) {
       upload.array("images", 6)(req, res, (err) => {
