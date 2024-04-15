@@ -18,6 +18,8 @@ const storage = getStorage(adminApp);
 
 async function uploadFileToStorage(req, res, next) {
   try {
+    console.log("here")
+    console.log(req.body)
     if (Array.isArray(req.files)) {
       const urls = [];
 

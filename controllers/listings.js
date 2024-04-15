@@ -9,12 +9,16 @@ async function getListing(req, res) {
 
     var listing;
     if (listingId) {
+      console.log(listingId);
       listing = await Listing.findById(listingId);
+      console.log(listing);
     } else if (listingPage) {
       listing = await Listing.find()
+        .skip(listingPage * 100)
+        .limit(100);
     } else {
       listing = await Listing.aggregate([
-        { $sample: { size: 9 } }, // Fetch a random sample of 10 listings
+        { $sample: { size: 100 } }, // Fetch a random sample of 10 listings
         {
           $lookup: {
             // Populate the owner field
@@ -44,6 +48,7 @@ async function getListing(req, res) {
 async function addListing(req, res) {
   try {
     var data = req.body;
+    console.log(req.body)
 
     //creating listing
     try {
@@ -179,11 +184,11 @@ async function myListings(req, res) {
   try {
     // getting listing
     const id = req.params.id;
-    console.log(id)
+    console.log(id);
     var listing;
     if (id) {
       listing = await Listing.aggregate([
-        { $match: { owner: id  } },
+        { $match: { owner: id } },
         {
           $lookup: {
             // Populate the owner field
@@ -198,7 +203,7 @@ async function myListings(req, res) {
       ]);
     }
 
-    if (!listing||listing==[]) {
+    if (!listing || listing == []) {
       return res.status(404).json({ message: "No results found" });
     }
 
@@ -315,5 +320,5 @@ export {
   deleteListing,
   searchByTitle,
   searchListing,
-  myListings
+  myListings,
 };
