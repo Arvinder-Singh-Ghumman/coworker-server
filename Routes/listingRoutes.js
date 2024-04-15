@@ -21,7 +21,7 @@ router.get("/mylistings/:id", myListings);
 
 
 router.post("/new", handleFormData, uploadFileToStorage, addListing);
-router.post("/update/:id", updateListing);
+router.post("/update/:id", handleFormData, uploadFileToStorage, updateListing);
 
 router.delete("/:id", deleteListing);
 

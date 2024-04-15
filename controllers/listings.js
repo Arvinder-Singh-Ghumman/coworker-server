@@ -11,7 +11,27 @@ async function getListing(req, res) {
     var listing;
     if (listingId) {
       console.log(listingId);
-      listing = await Listing.findById(listingId);
+      listing = await Listing.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(listingId)
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            pipeline: [
+              { $project: { _id: 1, name: 1, email: 1 } }
+            ],
+            as: "owner"
+          }
+        },
+        {
+          $unwind: "$owner"
+        }
+      ]);
       console.log(listing);
     } else if (listingPage) {
       listing = await Listing.find()
@@ -191,17 +211,20 @@ async function myListings(req, res) {
   try {
     // getting listing
     const id = req.params.id;
+    const formData = req.body;
 
-    var listing;
-    if (id) {
-      listing = await Listing.find({ owner: id });
-    }
-    if (!listing || listing.length === 0) {
-      return res.status(404).json({ message: "No results found" });
+    const updatedListing = await Listing.findByIdAndUpdate(
+      id,
+      formData,
+      { new: true } // To return the updated document
+    );
+
+    // check
+    if (!updatedListing) {
+      return res.status(404).json({ message: "Listing not found" });
     }
 
-    // sending listing
-    return res.status(200).json(listing);
+    return res.status(200).json({ message: "Listing updated successfully", updatedListing });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -209,7 +232,6 @@ async function myListings(req, res) {
 }
 async function searchListing(req, res) {
   try {
-    console.log("starts")
     var listings;
     var pipeline = [];
 
