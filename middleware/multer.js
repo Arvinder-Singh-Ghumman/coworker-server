@@ -5,7 +5,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 function handleFormData(req, res, next) {
   if (req.is("multipart/form-data")) {
     if (Array.isArray(req.files)) {
-      upload.array("images", 6)(req, res, (err) => {
+      upload.array("image", 6)(req, res, (err) => {
         if (err instanceof multer.MulterError) {
           return res.status(400).json(err);
         } else if (err) {

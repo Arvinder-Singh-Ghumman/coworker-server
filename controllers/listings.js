@@ -1,4 +1,5 @@
 import Listing from "../models/listing.js";
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
 async function getListing(req, res) {
@@ -48,7 +49,6 @@ async function getListing(req, res) {
 async function addListing(req, res) {
   try {
     var data = req.body;
-    console.log(req.body)
 
     //creating listing
     try {
@@ -130,6 +130,14 @@ async function updateListing(req, res) {
 async function deleteListing(req, res) {
   const listingId = req.params.id;
 
+  //validating
+  const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.KEY);
+
+    const listing = await Listing.findById(listingId);
+    if(decoded.id!==listing.owner.toString())
+    return res.status(401).json({message: "You are not authorized to delete it."})
+
   try {
     // Find the listing by ID and delete it
     const deletedUser = await Listing.findByIdAndDelete(listingId);
@@ -176,7 +184,6 @@ async function searchByTitle(req, res) {
     // sending listing
     return res.status(200).json(listing);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -184,26 +191,12 @@ async function myListings(req, res) {
   try {
     // getting listing
     const id = req.params.id;
-    console.log(id);
+
     var listing;
     if (id) {
-      listing = await Listing.aggregate([
-        { $match: { owner: id } },
-        {
-          $lookup: {
-            // Populate the owner field
-            from: "users",
-            localField: "owner",
-            foreignField: "_id",
-            pipeline: [{ $project: { _id: 1, name: 1, email: 1 } }],
-            as: "owner",
-          },
-        },
-        { $unwind: "$owner" }, // Flatten the owner array
-      ]);
+      listing = await Listing.find({ owner: id });
     }
-
-    if (!listing || listing == []) {
+    if (!listing || listing.length === 0) {
       return res.status(404).json({ message: "No results found" });
     }
 
@@ -216,11 +209,11 @@ async function myListings(req, res) {
 }
 async function searchListing(req, res) {
   try {
+    console.log("starts")
     var listings;
     var pipeline = [];
 
     var { minPrice, maxPrice } = req.query;
-
     // category
     if (req.query.category) {
       pipeline.push({
@@ -239,16 +232,17 @@ async function searchListing(req, res) {
     } else if (maxPrice) {
       pipeline.push({ $match: { price: { $lte: parseInt(maxPrice) } } });
     }
-    //page
-    if (req.query.page) {
-      pipeline.push({ $limit: req.query.page * 10 });
-    } else {
-      pipeline.push({ $limit: 10 });
-    }
+    
+    
     //other all params
+    if (req.query.title) {
+      pipeline.push({
+        $match: { title: { $regex: req.query.title, $options: "i" } },
+      });
+    }
     if (req.query.address) {
       pipeline.push({
-        $match: { address: { $regex: req.query.address, $options: "i" } },
+        $match: { location: { $regex: req.query.address, $options: "i" } },
       });
     }
     if (req.query.neighborhood) {
@@ -287,7 +281,13 @@ async function searchListing(req, res) {
     if (req.query.term) {
       pipeline.push({ $match: { term: req.query.term } });
     }
-
+    //page
+    if (req.query.page) {
+      pipeline.push({ $limit: req.query.page * 10 });
+    } else {
+      pipeline.push({ $limit: 50 });
+    }
+    
     //populating the listings
     pipeline.push({
       $lookup: {
