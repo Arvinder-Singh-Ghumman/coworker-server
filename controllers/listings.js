@@ -14,23 +14,21 @@ async function getListing(req, res) {
       listing = await Listing.aggregate([
         {
           $match: {
-            _id: new mongoose.Types.ObjectId(listingId)
-          }
+            _id: new mongoose.Types.ObjectId(listingId),
+          },
         },
         {
           $lookup: {
             from: "users",
             localField: "owner",
             foreignField: "_id",
-            pipeline: [
-              { $project: { _id: 1, name: 1, email: 1 } }
-            ],
-            as: "owner"
-          }
+            pipeline: [{ $project: { _id: 1, name: 1, email: 1 } }],
+            as: "owner",
+          },
         },
         {
-          $unwind: "$owner"
-        }
+          $unwind: "$owner",
+        },
       ]);
       console.log(listing);
     } else if (listingPage) {
@@ -84,65 +82,27 @@ async function addListing(req, res) {
 
 async function updateListing(req, res) {
   try {
-    //getting user using id
-    const listingId = req.params.id;
-    const listing = await Listing.findById(listingId);
+    // getting listing
+    const id = req.params.id;
+    var formData = req.body;
+    if(req.body.reviews)formData.reviews = JSON.parse(req.body.reviews)
 
-    // no user found
-    if (!listing) {
+    const updatedListing = await Listing.findByIdAndUpdate(
+      id,
+      formData,
+      { new: true } // To return the updated document
+    );
+
+    // check
+    if (!updatedListing) {
       return res.status(404).json({ message: "Listing not found" });
     }
 
-    // Update listing
-    if (req.body.title) {
-      listing.title = req.body.title;
-    }
-    if (req.body.picturePath) {
-      listing.picturePath = req.body.picturePath;
-    }
-    if (req.body.category) {
-      listing.category = req.body.category;
-    }
-    if (req.body.price) {
-      listing.price = req.body.price;
-    }
-    if (req.body.location) {
-      listing.location = req.body.location;
-    }
-    if (req.body.seating) {
-      listing.seating = req.body.seating;
-    }
-    if (req.body.term) {
-      listing.term = req.body.term;
-    }
-    if (req.body.description) {
-      listing.description = req.body.description;
-    }
-    if (req.body.availability) {
-      listing.availability = req.body.availability;
-    }
-    if (req.body.isSmokingAllowed) {
-      listing.isSmokingAllowed = req.body.isSmokingAllowed;
-    }
-    if (req.body.neighborhood) {
-      listing.neighborhood = req.body.neighborhood;
-    }
-    if (req.body.squareFeet) {
-      listing.squareFeet = parseInt(req.body.squareFeet);
-    }
-    if (req.body.hasParking !== undefined) {
-      listing.hasParking = req.body.hasParking;
-    }
-    if (req.body.hasPublicTransportation !== undefined) {
-      listing.hasPublicTransportation = req.body.hasPublicTransportation;
-    }
-
-    // Save the updated user object
-    await listing.save();
-
-    //sending user object (excluding password)
-    return res.status(200).json({ message: "Updated successfully" });
+    return res
+      .status(200)
+      .json({ message: "Listing updated successfully", updatedListing });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -152,11 +112,13 @@ async function deleteListing(req, res) {
 
   //validating
   const token = req.headers.authorization.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.KEY);
+  const decoded = jwt.verify(token, process.env.KEY);
 
-    const listing = await Listing.findById(listingId);
-    if(decoded.id!==listing.owner.toString())
-    return res.status(401).json({message: "You are not authorized to delete it."})
+  const listing = await Listing.findById(listingId);
+  if (decoded.id !== listing.owner.toString())
+    return res
+      .status(401)
+      .json({ message: "You are not authorized to delete it." });
 
   try {
     // Find the listing by ID and delete it
@@ -211,25 +173,45 @@ async function myListings(req, res) {
   try {
     // getting listing
     const id = req.params.id;
-    const formData = req.body;
 
-    const updatedListing = await Listing.findByIdAndUpdate(
-      id,
-      formData,
-      { new: true } // To return the updated document
-    );
-
-    // check
-    if (!updatedListing) {
-      return res.status(404).json({ message: "Listing not found" });
+    var listing;
+    if (id) {
+      listing = await Listing.find({ owner: id });
+    }
+    if (!listing || listing.length === 0) {
+      return res.status(404).json({ message: "No results found" });
     }
 
-    return res.status(200).json({ message: "Listing updated successfully", updatedListing });
+    // sending listing
+    return res.status(200).json(listing);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+// async function myListings(req, res) {
+//   try {
+//     // getting listing
+//     const id = req.params.id;
+//     const formData = req.body;
+
+//     const updatedListing = await Listing.findByIdAndUpdate(
+//       id,
+//       formData,
+//       { new: true } // To return the updated document
+//     );
+
+//     // check
+//     if (!updatedListing) {
+//       return res.status(404).json({ message: "Listing not found" });
+//     }
+
+//     return res.status(200).json({ message: "Listing updated successfully", updatedListing });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// }
 async function searchListing(req, res) {
   try {
     var listings;
@@ -254,8 +236,7 @@ async function searchListing(req, res) {
     } else if (maxPrice) {
       pipeline.push({ $match: { price: { $lte: parseInt(maxPrice) } } });
     }
-    
-    
+
     //other all params
     if (req.query.title) {
       pipeline.push({
@@ -309,7 +290,7 @@ async function searchListing(req, res) {
     } else {
       pipeline.push({ $limit: 50 });
     }
-    
+
     //populating the listings
     pipeline.push({
       $lookup: {

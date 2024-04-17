@@ -28,9 +28,9 @@ const ListingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    reveiws: {
-      type: Object,
-      default: {}
+    reviews: {
+      type: Array,
+      default: []
     },
     seating: Number,
     description: String,

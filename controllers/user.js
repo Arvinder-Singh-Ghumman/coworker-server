@@ -106,6 +106,44 @@ async function logIn(req, res) {
   }
 }
 
+async function addReview(req, res) {
+  try {
+    //getting user using id
+    const id = req.params.id;
+    console.log(req.body)
+    const user = await User.findById(id)
+    
+    // no user found
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user details
+    if (req.body.reviews) {
+      user.reviews = req.body.reviews;
+    }
+    // Save the updated user object
+    await user.save();
+
+    // sending updated user (excluding the password)
+    const updatedUser = await User.findById(id, { password: 0 });
+
+    if (!updateUser) {
+      // user not found
+      return res
+        .status(500)
+        .json({
+          message: "update was success but error occured at a later stage",
+        });
+    }
+
+    //sending user object (excluding password)
+    return res.status(200).json({message: "Review added", updatedUser});
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 async function updateUser(req, res) {
   try {
     //getting user using id
@@ -182,4 +220,4 @@ async function deleteUser(req, res) {
   }
 }
 
-export { addUser, logIn, getUser, getUserById, deleteUser, updateUser };
+export { addUser, logIn, getUser, addReview, getUserById, deleteUser, updateUser };

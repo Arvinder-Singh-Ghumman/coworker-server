@@ -23,9 +23,9 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    reveiws: {
-      type: Object,
-      default: {}
+    reviews: {
+      type: Array,
+      default: []
     },
     role: {
       type: String,

@@ -19,7 +19,7 @@ const storage = getStorage(adminApp);
 async function uploadFileToStorage(req, res, next) {
   try {
     if (Array.isArray(req.files)) {
-      const urls = [];
+      var urls = [];
 
       for (const file of req.files) {
         const storageRef = ref(
@@ -37,7 +37,7 @@ async function uploadFileToStorage(req, res, next) {
       }
 
       console.log("Files successfully uploaded.");
-      req.body.picturePaths = urls;
+      req.body.picturePath = urls;
     } else if (req.file) {
       const storageRef = ref(
         storage,
