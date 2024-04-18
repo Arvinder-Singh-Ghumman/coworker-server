@@ -109,8 +109,12 @@ async function logIn(req, res) {
 async function addReview(req, res) {
   try {
     //getting user using id
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.KEY);
+    let byUser = await User.findById(decoded.id);
+
+    //getting user using id
     const id = req.params.id;
-    console.log(req.body)
     const user = await User.findById(id)
     
     // no user found
@@ -119,8 +123,11 @@ async function addReview(req, res) {
     }
 
     // Update user details
-    if (req.body.reviews) {
-      user.reviews = req.body.reviews;
+    if (req.body) {
+      const review = req.body;
+      review.by = { id: byUser._id, name: byUser.name, picturePath: byUser.picturePath };
+      console.log(review)
+      user.reviews = review;
     }
     // Save the updated user object
     await user.save();
